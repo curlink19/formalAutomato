@@ -309,7 +309,7 @@ public:
         bool isFinded = false;
         bool isConflict = false;
         for (size_t u = 0; u < v; ++u) {
-          if (used[u] == used[v]) {
+          if ((used[u] == used[v]) && (classNumber[u] == classNumber[v])) {
             isFinded = true;
             classNumber[v] = classNumber[u];
           } else if (classNumber[u] == classNumber[v]) {
