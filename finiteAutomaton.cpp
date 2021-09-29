@@ -190,6 +190,8 @@ public:
               }
             }
           }
+          sort(u.begin(), u.end());
+          u.erase(std::unique(u.begin(), u.end()), u.end());
           graph[v].push_back(std::make_pair(u, it.getLetter()));
           if (!tagged[u]) {
             tagged[u] = true;
