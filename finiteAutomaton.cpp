@@ -412,8 +412,12 @@ public:
         if (!cycleSource.empty()) {
           cycleSource += "+";
         }
-        cycleSource += "(" + it.first +")";
-      }
+        if (it.first.empty()) {
+          cycleSource += "(@)";
+        } else {
+          cycleSource += "(" + it.first +")";
+        }
+      } 
       if (it.second == last) {
         if (!sourceToLast.empty()) {
           sourceToLast += "+";
@@ -433,7 +437,11 @@ public:
         if (!cycleLast.empty()) {
           cycleLast += "+";
         }
-        cycleLast += "(" + it.first +")";
+        if (it.first.empty()) {
+          cycleLast += "(@)";
+        } else {
+          cycleLast += "(" + it.first + ")";
+        }
       }
       if (it.second == source) {
         if (!lastToSource.empty()) {
@@ -448,15 +456,36 @@ public:
     }
     std::string onepart = "";
     onepart += "(";
-    onepart += "(" + cycleSource + ")*";
-    onepart += "(" + sourceToLast + ")";
-    onepart += "(" + cycleLast + ")*";
-    onepart += "(" + lastToSource + ")";
-    onepart += "(" + cycleSource + ")*";
+    if (!cycleSource.empty()) { 
+      onepart += "(" + cycleSource + ")*";
+    }
+    if (!sourceToLast.empty()) {
+      onepart += "(" + sourceToLast + ")";
+    }
+    if (!cycleLast.empty()) {
+      onepart += "(" + cycleLast + ")*";
+    }
+    if (!lastToSource.empty()) {
+      onepart += "(" + lastToSource + ")";
+    }
+    if (!cycleSource.empty()) {
+      onepart += "(" + cycleSource + ")*";
+    }
     onepart += ")*";
-    onepart += "(" + cycleSource + ")*";
-    std::string result = onepart + "(" + sourceToLast + ")" + "(" + cycleLast + ")*";
-    if (isTerminal_[source_]) {
+    if (onepart.size() == 3) {
+      onepart = "";
+    }
+    if (!cycleSource.empty()) {
+      onepart += "(" + cycleSource + ")*";
+    }
+    std::string result = onepart;
+    if (!sourceToLast.empty()) {
+      result += "(" + sourceToLast + ")";
+    }
+    if (!cycleLast.empty()) {
+      result += "(" + cycleLast + ")*";
+    }
+    if (isTerminal_[source_] && !onepart.empty()) {
       return onepart + "+" + result;
     }
     return result;
