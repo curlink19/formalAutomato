@@ -352,7 +352,7 @@ public:
     std::vector<std::vector<std::pair<std::string, int>>> graph(vertexCount() + 1);
     for (size_t v = 0; v < vertexCount(); ++v) {
       for (auto it = getBegin(v); it.valid(); it.next()) {
-        graph[v].push_back(std::make_pair(static_cast<std::string>(it.getLetter()), static_cast<int>(it.getFinish())));
+        graph[v].push_back(std::make_pair(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
       }
       if (isTerminal_[v]) {
         graph[v].push_back(std::make_pair("", vertexCount()));
@@ -368,11 +368,11 @@ public:
           continue;
         }
         for (auto itu: graph[u]) {
-          if (itu.second == v) {
+          if (itu.second == static_cast<int>(v)) {
             std::string firstPart = itu.first;
             std::string cycle = "";
             for (auto itcycle: graph[v]) {
-              if (itcycle.second == v) {
+              if (itcycle.second == static_cast<int>(v)) {
                 if (itcycle.first.empty()) {
                   continue;
                 }
