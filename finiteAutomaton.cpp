@@ -293,6 +293,7 @@ public:
         classNumber[v] = 1;
       }
     }
+    auto oldClassNumber = classNumber;
     int currentClassNumber = 2;
     int numberOfIterations = vertexCount();
     while (numberOfIterations--) {
@@ -309,7 +310,7 @@ public:
         bool isFinded = false;
         bool isConflict = false;
         for (size_t u = 0; u < v; ++u) {
-          if ((used[u] == used[v]) && (classNumber[u] == classNumber[v])) {
+          if ((used[u] == used[v]) && (oldClassNumber[u] == oldClassNumber[v])) {
             isFinded = true;
             classNumber[v] = classNumber[u];
           } else if (classNumber[u] == classNumber[v]) {
@@ -324,6 +325,7 @@ public:
       if (!checkIteration) {
         break;
       }
+      oldClassNumber = classNumber;
     }
     std::vector<bool> answerTerminal(currentClassNumber, false);
     for (size_t v = 0; v < classNumber.size(); ++v) {
