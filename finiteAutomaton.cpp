@@ -150,12 +150,11 @@ public:
     return answer;
   }
 
-private:
+public: // Must be private, public only for easy-testing
   using Tcort = std::vector<Tvertex>;
 
-public:
   finiteAutomaton<Tvertex, Tletter> getSubsetGraph(std::vector<Tcort> subsetsArray, std::vector<Tcort> terms,
-                                    std::vector<std::pair<Tcort, Tletter>> graph) {
+                                    std::map<Tcort, std::vector<std::pair<Tcort, Tletter>>> graph) {
     std::map<Tcort, Tvertex> index;
     std::vector<Tvertex> indexTerms;
     for (size_t i = 0; i < subsetsArray.size(); ++i) {
@@ -173,6 +172,7 @@ public:
     return answer;
   }
 
+public:
   finiteAutomaton<Tvertex, Tletter> determine() { 
     std::map<Tcort, std::vector<std::pair<Tcort, Tletter>>> graph;
     std::map<Tcort, bool> tagged;
@@ -185,9 +185,9 @@ public:
       Tcort v = q.front();
       tagged[v] = true;
       q.pop();
-      std::vector<std::vector<bool>> adlist(v.size());
+      std::vector<std::vector<bool>> used(v.size());
       for (size_t i = 0; i < v.size(); ++i) {
-        adlist[i].resize(adjencyList_[v[i]].size(), false);
+        used[i].resize(adjencyList_[v[i]].size(), false);
       }
       for (size_t i = 0; i < v.size(); ++i) {
         if (isTerminal_[v[i]]) {
@@ -198,19 +198,19 @@ public:
       for (size_t i = 0; i < v.size(); ++i) {
         size_t counter = 0;
         for (auto it = getBegin(v[i]); it.valid(); it.next(), ++counter) {
-          if (adlist[i][counter]) {
+          if (used[i][counter]) {
             continue;
           }
-          adlist[i][counter] = true;
+          used[i][counter] = true;
           Tcort u = {it.getFinish()};
           for (size_t j = i; j < v.size(); ++j) {
             size_t new_counter = 0;
             for (auto new_it = getBegin(v[j]); new_it.valid(); new_it.next(), ++new_counter) {
-              if (adlist[j][new_counter]) {
+              if (used[j][new_counter]) {
                 continue;
               }
               if (it.getLetter() == new_it.getLetter()) {
-                adlist[j][new_counter] = true;
+                used[j][new_counter] = true;
                 u.push_back(new_it.getFinish());
                 break;
               }
@@ -322,6 +322,9 @@ public:
     return finiteAutomaton(adjencyList_, source_, answerTerminal);
   }
 
+public: // Must be private, public only for easy-testing
+
+public:
   finiteAutomaton<Tvertex, Tletter> minimize() {
     std::vector<int> classNumber(vertexCount(), 0);
     for (size_t v = 0; v < vertexCount(); ++v) {
@@ -333,20 +336,20 @@ public:
     int currentClassNumber = 2;
     int numberOfIterations = vertexCount();
     while (numberOfIterations--) {
-      std::vector<std::vector<std::pair<Tletter, int>>> used(classNumber.size());
+      std::vector<std::vector<std::pair<Tletter, int>>> adlist(classNumber.size());
       for (size_t v = 0; v < classNumber.size(); ++v) {
         for (auto it = getBegin(v); it.valid(); it.next()) {
-          used[v].push_back(std::make_pair(it.getLetter(), classNumber[it.getFinish()]));
+          adlist[v].push_back(std::make_pair(it.getLetter(), classNumber[it.getFinish()]));
         }
-        std::sort(used[v].begin(), used[v].end());
-        used[v].erase(std::unique(used[v].begin(), used[v].end()), used[v].end());
+        std::sort(adlist[v].begin(), adlist[v].end());
+        adlist[v].erase(std::unique(adlist[v].begin(), adlist[v].end()), adlist[v].end());
       }
       bool checkIteration = false;
       for (size_t v = 0; v < classNumber.size(); ++v) {
         bool isFinded = false;
         bool isConflict = false;
         for (size_t u = 0; u < v; ++u) {
-          if ((used[u] == used[v]) && (oldClassNumber[u] == oldClassNumber[v])) {
+          if ((adlist[u] == adlist[v]) && (oldClassNumber[u] == oldClassNumber[v])) {
             isFinded = true;
             classNumber[v] = classNumber[u];
           } else if (classNumber[u] == classNumber[v]) {
@@ -370,14 +373,14 @@ public:
       }
     }
     finiteAutomaton<Tvertex, Tletter> answer(currentClassNumber, classNumber[source_], answerTerminal);
-    std::map<std::pair<std::pair<int, int>, Tletter>, bool> used;
+    std::map<std::pair<std::pair<int, int>, Tletter>, bool> adlist;
     for (size_t v = 0; v < classNumber.size(); ++v) {
       for (auto it = getBegin(v); it.valid(); it.next()) {
         auto currentEdge = std::make_pair(std::make_pair(classNumber[v], classNumber[it.getFinish()]), it.getLetter());
-        if (used[currentEdge]) {
+        if (adlist[currentEdge]) {
           continue;
         }
-        used[currentEdge] = true;
+        adlist[currentEdge] = true;
         Tvertex stU = static_cast<Tvertex>(currentEdge.first.first);
         Tvertex stV = static_cast<Tvertex>(currentEdge.first.second);
         answer.insertEdge(stU, stV, currentEdge.second);
