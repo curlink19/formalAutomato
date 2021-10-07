@@ -50,17 +50,6 @@ TEST_F(TestFiniteAutomaton, determine_checkingSource) {
   ASSERT_EQ(answer.getHash(), "0>p>1|1");
 }
 
-TEST_F(TestFiniteAutomaton, determine_checkingOfGettingSubsetGraph) {
-  using Tcort = std::vector<int>;
-  std::vector<Tcort> subsetsArray = {{2}, {1, 2}, {1, 2, 3}};
-  std::vector<Tcort> terms = {{1, 2}};
-  std::map<Tcort, std::vector<std::pair<Tcort, char>>> graph;
-  graph[{2}] = {{{1, 2}, 'x'}};
-  graph[{1, 2}] = {{{1, 2, 3}, 'y'}};
-  auto answer = finiteAutomaton<int, char>(1, 0, std::vector<int>({0})).getSubsetGraph(subsetsArray, terms, graph);
-  ASSERT_EQ(answer.getHash(), "0>x>1,1>y>2|1");
-}
-
 TEST_F(TestFiniteAutomaton, determine_checkingBigLineTest) {
   foo = new finiteAutomaton<int, char>(8, 0, std::vector<int>({7}));
   foo->insertEdge(0, 1, 'x');
@@ -103,6 +92,56 @@ TEST_F(TestFiniteAutomaton, negatate_simpleTest) {
   foo->insertEdge(1, 0, 'a');
   auto answer = foo->negatate();
   ASSERT_EQ(answer.getHash(), "0>a>1,1>a>0|1");
+}
+
+TEST_F(TestFiniteAutomaton, minimize_simpleTest) {
+  foo = new finiteAutomaton<int, char>(4, 0, std::vector<int>({3}));
+  foo->insertEdge(0, 1, 'a');
+  foo->insertEdge(0, 2, 'b');
+  foo->insertEdge(1, 3, 'c');
+  foo->insertEdge(2, 3, 'c');
+  auto answer = foo->minimize();
+  ASSERT_EQ(answer.getHash(), "0>a>2,0>b>2,2>c>1|1");
+}
+
+TEST_F(TestFiniteAutomaton, minimize_bigTest) {
+  foo = new finiteAutomaton<int, char>(6, 0, std::vector<int>({2}));
+  foo->insertEdge(0, 1, 'a');
+  foo->insertEdge(1, 2, 'b');
+  foo->insertEdge(0, 5, 'b');
+  foo->insertEdge(5, 2, 'a');
+  foo->insertEdge(0, 3, '.');
+  foo->insertEdge(3, 2, '.');
+  foo->insertEdge(3, 4, 'a');
+  foo->insertEdge(3, 4, 'b');
+  foo->insertEdge(4, 3, 'a');
+  foo->insertEdge(4, 3, 'b');
+  auto answer = foo->eraseZeroEdges('.');
+  answer = answer.determine();
+  answer = answer.minimize();
+  ASSERT_EQ(answer.getHash(), "0>a>1,0>b>1,1>a>0,1>b>0|1");
+}
+
+TEST_F(TestFiniteAutomaton, determinator_getSubsetGraph) {
+  using Tcort = std::vector<int>;
+  foo = new finiteAutomaton<int, char>(1, 0, std::vector<int>({0}));
+  finiteAutomaton_determinator<int, char> fooDeterminator(*foo);
+  std::vector<Tcort> subsetsArray = {{1}, {1, 2}, {1, 2, 3}};
+  std::vector<Tcort> terms = {{1, 2}};
+  std::map<Tcort, std::vector<std::pair<Tcort, char>>> graph;
+  graph[{1}] = {{{1, 2}, 'x'}};
+  graph[{1, 2}] = {{{1, 2, 3}, 'y'}};
+  ASSERT_EQ(fooDeterminator.getSubsetGraph(subsetsArray, terms, graph).getHash(), "0>x>1,1>y>2|1");
+}
+
+TEST_F(TestFiniteAutomaton, minimizer_getClassGraph) {
+  foo = new finiteAutomaton<int, char>(4, 0, std::vector<int>({3}));
+  foo->insertEdge(0, 1, 'a');
+  foo->insertEdge(0, 2, 'b');
+  foo->insertEdge(1, 3, 'x');
+  foo->insertEdge(2, 3, 'x');
+  finiteAutomaton_minimizer<int, char> fooMinimizer(*foo);
+  ASSERT_EQ(fooMinimizer.getClassGraph(std::vector<int>({0, 1, 1, 2}), 3).getHash(), "0>a>1,0>b>1,1>x>2|2");
 }
 
 int main(int args, char *argv[]) {
