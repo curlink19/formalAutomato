@@ -9,51 +9,55 @@
 
 template<typename Tletter>
 std::vector<Tletter> defaultEdgeValues() {
-  std::vector<Tletter> array;
-  for (char c = 'a'; c <= 'z'; ++c) {
-    array.push_back(static_cast<Tletter>(c));
+  std::vector<Tletter> alphabetArray;
+  for (char alphabetLetter = 'a'; alphabetLetter <= 'z'; ++alphabetLetter) {
+    alphabetArray.push_back(static_cast<Tletter>(alphabetLetter));
   }
-  return array;
+  return alphabetArray;
 }
 
 template<typename Tvertex, typename Tletter>
 class finiteAutomaton {
-private:
+public:
   class Edge {
   public:
     Tvertex start;
     Tvertex finish;
     Tletter value;
 
-    explicit Edge(Tvertex u, Tvertex v, Tletter c):
-      start(u),
-      finish(v),
-      value(c) {} 
+    explicit Edge(Tvertex startVertex, Tvertex finishVertex, Tletter edgeLetter):
+      start(startVertex),
+      finish(finishVertex),
+      value(edgeLetter) {} 
+    
+    bool operator<(const Edge& anotherEdge) const {
+      return std::make_pair(std::make_pair(start, finish), value) <
+             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.value);
+    }
   };
 
   std::vector<std::vector<Edge>> adjencyList_;
   std::vector<bool> isTerminal_;
   Tvertex source_;
-
-public:
-  explicit finiteAutomaton(std::vector<std::vector<Edge>> adlist, Tvertex q, std::vector<bool> isterm):
+  
+  explicit finiteAutomaton(std::vector<std::vector<Edge>> adlist, Tvertex sourceVertex, std::vector<bool> isterm):
     adjencyList_(adlist),
     isTerminal_(isterm),
-    source_(q) {
+    source_(sourceVertex) {
       assert(isterm.size() == adlist.size());
     }
 
-  explicit finiteAutomaton(size_t vertexCount, Tvertex q, std::vector<bool> isterm):
+  explicit finiteAutomaton(size_t vertexCount, Tvertex sourceVertex, std::vector<bool> isterm):
     adjencyList_(vertexCount),
     isTerminal_(isterm),
-    source_(q) {
+    source_(sourceVertex) {
       assert(isterm.size() == vertexCount);
     }
 
-  explicit finiteAutomaton(size_t vertexCount, Tvertex q, std::vector<Tvertex> terms):
+  explicit finiteAutomaton(size_t vertexCount, Tvertex sourceVertex, std::vector<Tvertex> terms):
     adjencyList_(vertexCount),
     isTerminal_(vertexCount, false),
-    source_(q) {
+    source_(sourceVertex) {
       for (auto v: terms) {
         isTerminal_[v] = true;
       }
@@ -108,8 +112,8 @@ public:
     return OutgoingEdgesIterator(*this, 0, v);
   }
 
-  void insertEdge(Tvertex u, Tvertex v, Tletter c) {
-    adjencyList_[u].push_back(Edge(u, v, c));
+  void insertEdge(Tvertex startVertex, Tvertex finishVertex, Tletter edgeLetter) {
+    adjencyList_[startVertex].push_back(Edge(startVertex, finishVertex, edgeLetter));
   }
 
 private:
@@ -146,22 +150,44 @@ public:
     return answer;
   }
 
+private:
+  using Tcort = std::vector<Tvertex>;
+
+public:
+  finiteAutomaton<Tvertex, Tletter> getSubsetGraph(std::vector<Tcort> subsetsArray, std::vector<Tcort> terms,
+                                    std::vector<std::pair<Tcort, Tletter>> graph) {
+    std::map<Tcort, Tvertex> index;
+    std::vector<Tvertex> indexTerms;
+    for (size_t i = 0; i < subsetsArray.size(); ++i) {
+      index[subsetsArray[i]] = static_cast<Tvertex>(i);
+    }
+    for (size_t i = 0; i < terms.size(); ++i) {
+      indexTerms.push_back(index[terms[i]]);
+    }
+    finiteAutomaton<Tvertex, Tletter> answer(subsetsArray.size(), index[subsetsArray[0]], indexTerms);
+    for (auto it: graph) {
+      for (auto p: it.second) {
+        answer.insertEdge(index[it.first], index[p.first], p.second);
+      }
+    }
+    return answer;
+  }
+
   finiteAutomaton<Tvertex, Tletter> determine() { 
-    using Tcort = std::vector<Tvertex>;
     std::map<Tcort, std::vector<std::pair<Tcort, Tletter>>> graph;
     std::map<Tcort, bool> tagged;
-    std::vector<Tcort> array;
+    std::vector<Tcort> subsetsArray;
     std::vector<Tcort> terms;
-    array.push_back({0});
+    subsetsArray.push_back({source_});
     std::queue<Tcort> q;
-    q.push(array[0]);
+    q.push(subsetsArray[0]);
     while (!q.empty()) {
       Tcort v = q.front();
       tagged[v] = true;
       q.pop();
-      std::vector<std::vector<bool>> used(v.size());
+      std::vector<std::vector<bool>> adlist(v.size());
       for (size_t i = 0; i < v.size(); ++i) {
-        used[i].resize(adjencyList_[v[i]].size(), false);
+        adlist[i].resize(adjencyList_[v[i]].size(), false);
       }
       for (size_t i = 0; i < v.size(); ++i) {
         if (isTerminal_[v[i]]) {
@@ -172,19 +198,19 @@ public:
       for (size_t i = 0; i < v.size(); ++i) {
         size_t counter = 0;
         for (auto it = getBegin(v[i]); it.valid(); it.next(), ++counter) {
-          if (used[i][counter]) {
+          if (adlist[i][counter]) {
             continue;
           }
-          used[i][counter] = true;
+          adlist[i][counter] = true;
           Tcort u = {it.getFinish()};
           for (size_t j = i; j < v.size(); ++j) {
             size_t new_counter = 0;
             for (auto new_it = getBegin(v[j]); new_it.valid(); new_it.next(), ++new_counter) {
-              if (used[j][new_counter]) {
+              if (adlist[j][new_counter]) {
                 continue;
               }
               if (it.getLetter() == new_it.getLetter()) {
-                used[j][new_counter] = true;
+                adlist[j][new_counter] = true;
                 u.push_back(new_it.getFinish());
                 break;
               }
@@ -195,27 +221,13 @@ public:
           graph[v].push_back(std::make_pair(u, it.getLetter()));
           if (!tagged[u]) {
             tagged[u] = true;
-            array.push_back(u);
+            subsetsArray.push_back(u);
             q.push(u);
           }
         }
       }
     }
-    std::map<Tcort, Tvertex> index;
-    std::vector<Tvertex> indexTerms;
-    for (size_t i = 0; i < array.size(); ++i) {
-      index[array[i]] = static_cast<Tvertex>(i);
-    }
-    for (size_t i = 0; i < terms.size(); ++i) {
-      indexTerms.push_back(index[terms[i]]);
-    }
-    finiteAutomaton<Tvertex, Tletter> answer(array.size(), index[array[0]], indexTerms);
-    for (auto it: graph) {
-      for (auto p: it.second) {
-        answer.insertEdge(index[it.first], index[p.first], p.second);
-      }
-    }
-    return answer;
+    return getSubsetGraph(subsetsArray, terms, graph);
   }
 
   void printAllTerminals() const {
@@ -239,11 +251,11 @@ public:
     printAllTerminals();
   }
 
-  std::vector<std::pair<std::pair<Tvertex, Tvertex>, Tletter>> getEdges() {
-    std::vector<std::pair<std::pair<Tvertex, Tvertex>, Tletter>> result;
+  std::vector<Edge> getEdges() {
+    std::vector<Edge> result;
     for (size_t u = 0; u < vertexCount(); ++u) {
       for (auto it = getBegin(u); it.valid(); it.next()) {
-        auto current = std::make_pair(std::make_pair(it.getStart(), it.getFinish()), it.getLetter());
+        auto current = Edge(it.getStart(), it.getFinish(), it.getLetter());
         result.push_back(current);
       }
     }
@@ -259,6 +271,30 @@ public:
       }
     }
     return result;
+  }
+
+  std::string getHash() {
+    auto answerEdges = getEdges();
+    auto answerTerminals = getTerminals();
+    std::string str = "";
+    for (auto e: answerEdges) {
+      if (!str.empty()) {
+        str += ",";
+      }
+      str += std::to_string(e.start);
+      str += ">";
+      str += std::string(1, e.value);
+      str += ">";
+      str += std::to_string(e.finish);
+    }
+    str += "|";
+    for (auto v: answerTerminals) {
+      if (str.back() != '|') {
+        str += ",";
+      }
+      str += std::to_string(v);
+    }
+    return str;
   }
 
   finiteAutomaton<Tvertex, Tletter> makeFull(std::vector<Tletter> edgeValues = defaultEdgeValues<Tletter>()) {
