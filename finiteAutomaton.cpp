@@ -46,11 +46,11 @@ public:
   std::vector<bool> isTerminal_;
   Tvertex source_;
   
-  explicit finiteAutomaton(std::vector<std::vector<Edge>> adlist, Tvertex sourceVertex, std::vector<bool> isterm):
-    adjencyList_(adlist),
+  explicit finiteAutomaton(std::vector<std::vector<Edge>> adjacent_edge, Tvertex sourceVertex, std::vector<bool> isterm):
+    adjencyList_(adjacent_edge),
     isTerminal_(isterm),
     source_(sourceVertex) {
-      assert(isterm.size() == adlist.size());
+      assert(isterm.size() == adjacent_edge.size());
     }
 
   explicit finiteAutomaton(size_t vertexCount, Tvertex sourceVertex, std::vector<bool> isterm):
@@ -599,20 +599,20 @@ public:// Must be private, public only for easy-testing
     int currentClassNumber = 2;
     int numberOfIterations = network_.vertexCount();
     while (numberOfIterations--) {
-      std::vector<std::vector<integerMonoEdge>> adlist(classNumber.size());
+      std::vector<std::vector<integerMonoEdge>> adjacent_edge(classNumber.size());
       for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
         for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
-          adlist[vertex].push_back(integerMonoEdge(it.getLetter(), classNumber[it.getFinish()]));
+          adjacent_edge[vertex].push_back(integerMonoEdge(it.getLetter(), classNumber[it.getFinish()]));
         }
-        std::sort(adlist[vertex].begin(), adlist[vertex].end());
-        adlist[vertex].erase(std::unique(adlist[vertex].begin(), adlist[vertex].end()), adlist[vertex].end());
+        std::sort(adjacent_edge[vertex].begin(), adjacent_edge[vertex].end());
+        adjacent_edge[vertex].erase(std::unique(adjacent_edge[vertex].begin(), adjacent_edge[vertex].end()), adjacent_edge[vertex].end());
       }
       bool checkIteration = false;
       for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
         bool isFinded = false;
         bool isConflict = false;
         for (size_t neighborVertex = 0; neighborVertex < vertex; ++neighborVertex) {
-          if ((adlist[neighborVertex] == adlist[vertex]) && (oldClassNumber[neighborVertex] == oldClassNumber[vertex])) {
+          if ((adjacent_edge[neighborVertex] == adjacent_edge[vertex]) && (oldClassNumber[neighborVertex] == oldClassNumber[vertex])) {
             isFinded = true;
             classNumber[vertex] = classNumber[neighborVertex];
           } else if (classNumber[neighborVertex] == classNumber[vertex]) {
