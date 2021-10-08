@@ -258,14 +258,23 @@ public:
     return algo.execute();
   }
 
+  class edgeWord {
+    std::string str;
+    int vertex;
+
+    edgeWord(std::string letter, int edgeVertex):
+      str(letter),
+      vertex(edgeVertex) {} 
+  };
+
   std::string getExpression() {
-    std::vector<std::vector<std::pair<std::string, int>>> graph(vertexCount() + 1);
+    std::vector<std::vector<edgeWord>> graph(vertexCount() + 1);
     for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
       for (auto it = getBegin(vertex); it.valid(); it.next()) {
-        graph[vertex].push_back(std::make_pair(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
+        graph[vertex].push_back(edgeWord(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
       }
       if (isTerminal_[vertex]) {
-        graph[vertex].push_back(std::make_pair("", vertexCount()));
+        graph[vertex].push_back(edgeWord("", vertexCount()));
       }
     }
     std::vector<bool> del(graph.size(), false);
@@ -278,29 +287,29 @@ public:
           continue;
         }
         for (auto itu: graph[neighborVertex]) {
-          if (itu.second == static_cast<int>(vertex)) {
-            std::string firstPart = itu.first;
+          if (itu.vertex == static_cast<int>(vertex)) {
+            std::string firstPart = itu.str;
             std::string cycle = "";
             for (auto itcycle: graph[vertex]) {
-              if (itcycle.second == static_cast<int>(vertex)) {
-                if (itcycle.first.empty()) {
+              if (itcycle.vertex == static_cast<int>(vertex)) {
+                if (itcycle.str.empty()) {
                   continue;
                 }
                 if (!cycle.empty()) {
                   cycle += "+";
                 }
-                cycle += "(" + itcycle.first + ")";
+                cycle += "(" + itcycle.str + ")";
               }
             }
             for (auto ito: graph[vertex]) {
-              if (del[ito.second]) {
+              if (del[ito.vertex]) {
                 continue;
               }
-              std::string secondPart = ito.first;
+              std::string secondPart = ito.str;
               if (cycle.empty()) {
-                graph[neighborVertex].push_back(std::make_pair(firstPart + secondPart, ito.second));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + secondPart, ito.vertex));
               } else {
-                graph[neighborVertex].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, ito.second));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, ito.vertex));
               }
             }
           }
@@ -315,52 +324,52 @@ public:
     std::string cycleSource = "";
     std::string cycleLast = "";
     for (auto it: graph[source]) {
-      if (it.second == source) {
-        if (it.first.empty()) {
+      if (it.vertex == source) {
+        if (it.str.empty()) {
           continue;
         }
         if (!cycleSource.empty()) {
           cycleSource += "+";
         }
-        if (it.first.empty()) {
+        if (it.str.empty()) {
           cycleSource += "(@)";
         } else {
-          cycleSource += "(" + it.first +")";
+          cycleSource += "(" + it.str +")";
         }
       } 
-      if (it.second == last) {
+      if (it.vertex == last) {
         if (!sourceToLast.empty()) {
           sourceToLast += "+";
         }
-        if (it.first.empty()) {
+        if (it.str.empty()) {
           sourceToLast += "(@)";
         } else {
-          sourceToLast += "(" + it.first + ")";
+          sourceToLast += "(" + it.str + ")";
         }
       }
     }
     for (auto it: graph[last]) {
-      if (it.second == last) {
-        if (it.first.empty()) {
+      if (it.vertex == last) {
+        if (it.str.empty()) {
           continue;
         }
         if (!cycleLast.empty()) {
           cycleLast += "+";
         }
-        if (it.first.empty()) {
+        if (it.str.empty()) {
           cycleLast += "(@)";
         } else {
-          cycleLast += "(" + it.first + ")";
+          cycleLast += "(" + it.str + ")";
         }
       }
-      if (it.second == source) {
+      if (it.vertex == source) {
         if (!lastToSource.empty()) {
           lastToSource += "+";
         }
-        if (it.first.empty()) {
+        if (it.str.empty()) {
           lastToSource += "(@)";
         } else {
-          lastToSource += "(" + it.first + ")";
+          lastToSource += "(" + it.str + ")";
         }
       }
     }
@@ -403,6 +412,7 @@ public:
 
   friend finiteAutomaton_determinator<Tvertex, Tletter>;
 };
+
 
 template<typename Tvertex, typename Tletter>
 class finiteAutomaton_determinator {
