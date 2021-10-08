@@ -134,9 +134,9 @@ private:
     if (isTerminal_[vertex]) {
       answer.isTerminal_[startPoint] = true;
     } 
-    for (auto it = getBegin(vertex); it.valid(); it.next()) {
-      Tvertex neighborVertex = it.getFinish();
-      Tletter letter = it.getLetter();
+    for (auto edgesIterator = getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+      Tvertex neighborVertex = edgesIterator.getFinish();
+      Tletter letter = edgesIterator.getLetter();
       if (!usedVertex[neighborVertex] && (letter == zeroLetter)) {
         dfsZeroLetter(neighborVertex, startPoint, usedVertex, zeroLetter, answer);
       }
@@ -173,8 +173,8 @@ public:
   void print() {
     for (Tvertex vertex = 0; static_cast<size_t>(vertex) < vertexCount(); ++vertex) {
       std::cout << vertex << ": ";
-      for (auto it = getBegin(vertex); it.valid(); it.next()) {
-        std::cout << it.getFinish() << " " << it.getLetter() << " , ";
+      for (auto edgesIterator = getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+        std::cout << edgesIterator.getFinish() << " " << edgesIterator.getLetter() << " , ";
       }
       std::cout << "\n";
     }
@@ -185,8 +185,8 @@ public:
   std::vector<Edge> getEdges() {
     std::vector<Edge> result;
     for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
-      for (auto it = getBegin(vertex); it.valid(); it.next()) {
-        auto current = Edge(it.getStart(), it.getFinish(), it.getLetter());
+      for (auto edgesIterator = getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+        auto current = Edge(edgesIterator.getStart(), edgesIterator.getFinish(), edgesIterator.getLetter());
         result.push_back(current);
       }
     }
@@ -233,8 +233,8 @@ public:
     answer.addVertex();
     for (size_t vertex = 0; vertex < answer.vertexCount(); ++vertex) {
       std::map<Tletter, bool> usedEdge;
-      for (auto it = answer.getBegin(vertex); it.valid(); it.next()) {
-        usedEdge[it.getLetter()] = true;
+      for (auto edgesIterator = answer.getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+        usedEdge[edgesIterator.getLetter()] = true;
       }
       for (Tletter letter: edgeValues) {
         if (!usedEdge[letter]) {
@@ -270,8 +270,8 @@ public:
   std::string getExpression() {
     std::vector<std::vector<edgeWord>> graph(vertexCount() + 1);
     for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
-      for (auto it = getBegin(vertex); it.valid(); it.next()) {
-        graph[vertex].push_back(edgeWord(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
+      for (auto edgesIterator = getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+        graph[vertex].push_back(edgeWord(std::string(1, static_cast<char>(edgesIterator.getLetter())), static_cast<int>(edgesIterator.getFinish())));
       }
       if (isTerminal_[vertex]) {
         graph[vertex].push_back(edgeWord("", vertexCount()));
@@ -286,9 +286,9 @@ public:
         if (del[neighborVertex] || (neighborVertex == vertex)) { 
           continue;
         }
-        for (auto it: graph[neighborVertex]) {
-          if (it.vertex == static_cast<int>(vertex)) {
-            std::string firstPart = it.str;
+        for (auto edgesIterator: graph[neighborVertex]) {
+          if (edgesIterator.vertex == static_cast<int>(vertex)) {
+            std::string firstPart = edgesIterator.str;
             std::string cycle = "";
             for (auto itcycle: graph[vertex]) {
               if (itcycle.vertex == static_cast<int>(vertex)) {
@@ -301,15 +301,15 @@ public:
                 cycle += "(" + itcycle.str + ")";
               }
             }
-            for (auto ito: graph[vertex]) {
-              if (del[ito.vertex]) {
+            for (auto edgesIteratorOut: graph[vertex]) {
+              if (del[edgesIteratorOut.vertex]) {
                 continue;
               }
-              std::string secondPart = ito.str;
+              std::string secondPart = edgesIteratorOut.str;
               if (cycle.empty()) {
-                graph[neighborVertex].push_back(std::make_pair(firstPart + secondPart, ito.vertex));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + secondPart, edgesIteratorOut.vertex));
               } else {
-                graph[neighborVertex].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, ito.vertex));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, edgesIteratorOut.vertex));
               }
             }
           }
@@ -323,53 +323,53 @@ public:
     std::string lastToSource = "";
     std::string cycleSource = "";
     std::string cycleLast = "";
-    for (auto it: graph[source]) {
-      if (it.vertex == source) {
-        if (it.str.empty()) {
+    for (auto edgesIterator: graph[source]) {
+      if (edgesIterator.vertex == source) {
+        if (edgesIterator.str.empty()) {
           continue;
         }
         if (!cycleSource.empty()) {
           cycleSource += "+";
         }
-        if (it.str.empty()) {
+        if (edgesIterator.str.empty()) {
           cycleSource += "(@)";
         } else {
-          cycleSource += "(" + it.str +")";
+          cycleSource += "(" + edgesIterator.str +")";
         }
       } 
-      if (it.vertex == last) {
+      if (edgesIterator.vertex == last) {
         if (!sourceToLast.empty()) {
           sourceToLast += "+";
         }
-        if (it.str.empty()) {
+        if (edgesIterator.str.empty()) {
           sourceToLast += "(@)";
         } else {
-          sourceToLast += "(" + it.str + ")";
+          sourceToLast += "(" + edgesIterator.str + ")";
         }
       }
     }
-    for (auto it: graph[last]) {
-      if (it.vertex == last) {
-        if (it.str.empty()) {
+    for (auto edgesIterator: graph[last]) {
+      if (edgesIterator.vertex == last) {
+        if (edgesIterator.str.empty()) {
           continue;
         }
         if (!cycleLast.empty()) {
           cycleLast += "+";
         }
-        if (it.str.empty()) {
+        if (edgesIterator.str.empty()) {
           cycleLast += "(@)";
         } else {
-          cycleLast += "(" + it.str + ")";
+          cycleLast += "(" + edgesIterator.str + ")";
         }
       }
-      if (it.vertex == source) {
+      if (edgesIterator.vertex == source) {
         if (!lastToSource.empty()) {
           lastToSource += "+";
         }
-        if (it.str.empty()) {
+        if (edgesIterator.str.empty()) {
           lastToSource += "(@)";
         } else {
-          lastToSource += "(" + it.str + ")";
+          lastToSource += "(" + edgesIterator.str + ")";
         }
       }
     }
@@ -453,25 +453,25 @@ public: // Must be private, public only for easy-testing
       indexTerms.push_back(index[terms[position]]);
     }
     finiteAutomaton<Tvertex, Tletter> answer(subsetsArray.size(), index[subsetsArray[0]], indexTerms);
-    for (auto it: graph) {
-      for (auto edgePair: it.second) {
-        answer.insertEdge(index[it.first], index[edgePair.finish], edgePair.letter);
+    for (auto edgesIterator: graph) {
+      for (auto edgePair: edgesIterator.second) {
+        answer.insertEdge(index[edgesIterator.first], index[edgePair.finish], edgePair.letter);
       }
     }
     return answer;
   }
 
   void searchEdges(TvertexSubset& vertex, TvertexSubset& neighborVertex, size_t position, std::vector<std::vector<bool>>& usedPosition, 
-                   typename finiteAutomaton<Tvertex, Tletter>::OutgoingEdgesIterator& it) {
+                   typename finiteAutomaton<Tvertex, Tletter>::OutgoingEdgesIterator& edgesIterator) {
     for (size_t newPositon = position; newPositon < vertex.size(); ++newPositon) {
       size_t newCounter = 0;
-      for (auto newIt = network_.getBegin(vertex[newPositon]); newIt.valid(); newIt.next(), ++newCounter) {
+      for (auto newedgesIterator = network_.getBegin(vertex[newPositon]); newedgesIterator.valid(); newedgesIterator.next(), ++newCounter) {
         if (usedPosition[newPositon][newCounter]) {
           continue;
         }
-        if (it.getLetter() == newIt.getLetter()) {
+        if (edgesIterator.getLetter() == newedgesIterator.getLetter()) {
           usedPosition[newPositon][newCounter] = true;
-          neighborVertex.push_back(newIt.getFinish());
+          neighborVertex.push_back(newedgesIterator.getFinish());
           break;
         }
       }
@@ -497,16 +497,16 @@ public: // Must be private, public only for easy-testing
       }
       for (size_t position = 0; position < vertex.size(); ++position) {
         size_t counter = 0;
-        for (auto it = network_.getBegin(vertex[position]); it.valid(); it.next(), ++counter) {
+        for (auto edgesIterator = network_.getBegin(vertex[position]); edgesIterator.valid(); edgesIterator.next(), ++counter) {
           if (usedPosition[position][counter]) {
             continue;
           }
           usedPosition[position][counter] = true;
-          TvertexSubset neighborVertex = {it.getFinish()};
-          searchEdges(vertex, neighborVertex, position, usedPosition, it);
+          TvertexSubset neighborVertex = {edgesIterator.getFinish()};
+          searchEdges(vertex, neighborVertex, position, usedPosition, edgesIterator);
           sort(neighborVertex.begin(), neighborVertex.end());
           neighborVertex.erase(std::unique(neighborVertex.begin(), neighborVertex.end()), neighborVertex.end());
-          graph[vertex].push_back(subsetEdge(neighborVertex, it.getLetter()));
+          graph[vertex].push_back(subsetEdge(neighborVertex, edgesIterator.getLetter()));
           if (!tagged[neighborVertex]) {
             tagged[neighborVertex] = true;
             subsetsArray.push_back(neighborVertex);
@@ -556,8 +556,8 @@ public:// Must be private, public only for easy-testing
     finiteAutomaton<Tvertex, Tletter> answer(currentClassNumber, classNumber[network_.source_], answerTerminal);
     std::map<integerDoubleEdge, bool> usedEdge;
     for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
-      for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
-        auto currentEdge = integerDoubleEdge(classNumber[vertex], classNumber[it.getFinish()], it.getLetter());
+      for (auto edgesIterator = network_.getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+        auto currentEdge = integerDoubleEdge(classNumber[vertex], classNumber[edgesIterator.getFinish()], edgesIterator.getLetter());
         if (usedEdge[currentEdge]) {
           continue;
         }
@@ -601,8 +601,8 @@ public:// Must be private, public only for easy-testing
     while (numberOfIterations--) {
       std::vector<std::vector<integerMonoEdge>> adjacent_edge(classNumber.size());
       for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
-        for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
-          adjacent_edge[vertex].push_back(integerMonoEdge(it.getLetter(), classNumber[it.getFinish()]));
+        for (auto edgesIterator = network_.getBegin(vertex); edgesIterator.valid(); edgesIterator.next()) {
+          adjacent_edge[vertex].push_back(integerMonoEdge(edgesIterator.getLetter(), classNumber[edgesIterator.getFinish()]));
         }
         std::sort(adjacent_edge[vertex].begin(), adjacent_edge[vertex].end());
         adjacent_edge[vertex].erase(std::unique(adjacent_edge[vertex].begin(), adjacent_edge[vertex].end()), adjacent_edge[vertex].end());
