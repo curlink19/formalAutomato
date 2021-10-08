@@ -29,16 +29,16 @@ public:
   public:
     Tvertex start;
     Tvertex finish;
-    Tletter value;
+    Tletter letter;
 
     explicit Edge(Tvertex startVertex, Tvertex finishVertex, Tletter edgeLetter):
       start(startVertex),
       finish(finishVertex),
-      value(edgeLetter) {} 
+      letter(edgeLetter) {} 
     
     bool operator<(const Edge& anotherEdge) const {
-      return std::make_pair(std::make_pair(start, finish), value) <
-             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.value);
+      return std::make_pair(std::make_pair(start, finish), letter) <
+             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.letter);
     }
   };
 
@@ -64,8 +64,8 @@ public:
     adjencyList_(vertexCount),
     isTerminal_(vertexCount, false),
     source_(sourceVertex) {
-      for (auto v: terms) {
-        isTerminal_[v] = true;
+      for (auto vertex: terms) {
+        isTerminal_[vertex] = true;
       }
     }
   
@@ -80,10 +80,10 @@ public:
     Tvertex vertex_;
   
   public:
-    explicit OutgoingEdgesIterator(finiteAutomaton& atm, size_t position, Tvertex v):
+    explicit OutgoingEdgesIterator(finiteAutomaton& atm, size_t position, Tvertex vertex):
       network_(atm),
       index_(position),
-      vertex_(v) {}
+      vertex_(vertex) {}
 
     bool valid() const {
       return (vertex_ >= 0) && 
@@ -110,12 +110,12 @@ public:
     }
 
     Tletter getLetter() const {
-      return getEdge().value;
+      return getEdge().letter;
     }
   };
 
-  OutgoingEdgesIterator getBegin(Tvertex v) {
-    return OutgoingEdgesIterator(*this, 0, v);
+  OutgoingEdgesIterator getBegin(Tvertex vertex) {
+    return OutgoingEdgesIterator(*this, 0, vertex);
   }
 
   void insertEdge(Tvertex startVertex, Tvertex finishVertex, Tletter edgeLetter) {
@@ -128,20 +128,20 @@ private:
     isTerminal_.push_back(false);
   }
 
-  void dfsZeroLetter(Tvertex u, Tvertex startPoint, std::vector<bool>& used, 
+  void dfsZeroLetter(Tvertex vertex, Tvertex startPoint, std::vector<bool>& usedVertex, 
                      Tletter& zeroLetter, finiteAutomaton<Tvertex, Tletter>& answer) {
-    used[u] = true;
-    if (isTerminal_[u]) {
+    usedVertex[vertex] = true;
+    if (isTerminal_[vertex]) {
       answer.isTerminal_[startPoint] = true;
     } 
-    for (auto it = getBegin(u); it.valid(); it.next()) {
-      Tvertex v = it.getFinish();
-      Tletter c = it.getLetter();
-      if (!used[v] && (c == zeroLetter)) {
-        dfsZeroLetter(v, startPoint, used, zeroLetter, answer);
+    for (auto it = getBegin(vertex); it.valid(); it.next()) {
+      Tvertex neighborVertex = it.getFinish();
+      Tletter letter = it.getLetter();
+      if (!usedVertex[neighborVertex] && (letter == zeroLetter)) {
+        dfsZeroLetter(neighborVertex, startPoint, usedVertex, zeroLetter, answer);
       }
-      if (c != zeroLetter) {
-        answer.insertEdge(startPoint, v, c);
+      if (letter != zeroLetter) {
+        answer.insertEdge(startPoint, neighborVertex, letter);
       }
     }
   };
@@ -149,9 +149,9 @@ private:
 public:  
   finiteAutomaton<Tvertex, Tletter> eraseZeroEdges(Tletter zeroLetter) {
     finiteAutomaton<Tvertex, Tletter> answer(vertexCount(), source_, isTerminal_);
-    for (Tvertex v = 0; static_cast<size_t>(v) < vertexCount(); ++v) {
-      std::vector<bool> used(vertexCount(), false);
-      dfsZeroLetter(v, v, used, zeroLetter, answer);
+    for (Tvertex vertex = 0; static_cast<size_t>(vertex) < vertexCount(); ++vertex) {
+      std::vector<bool> usedVertex(vertexCount(), false);
+      dfsZeroLetter(vertex, vertex, usedVertex, zeroLetter, answer);
     }
     return answer;
   }
@@ -162,18 +162,18 @@ public:
   }
 
   void printAllTerminals() const {
-    for (Tvertex v = 0; static_cast<size_t>(v) < vertexCount(); ++v) {
-      if (isTerminal_[v]) {
-        std::cout << v << " ";
+    for (Tvertex vertex = 0; static_cast<size_t>(vertex) < vertexCount(); ++vertex) {
+      if (isTerminal_[vertex]) {
+        std::cout << vertex << " ";
       }
     }
     std::cout << "\n";
   }
 
   void print() {
-    for (Tvertex v = 0; static_cast<size_t>(v) < vertexCount(); ++v) {
-      std::cout << v << ": ";
-      for (auto it = getBegin(v); it.valid(); it.next()) {
+    for (Tvertex vertex = 0; static_cast<size_t>(vertex) < vertexCount(); ++vertex) {
+      std::cout << vertex << ": ";
+      for (auto it = getBegin(vertex); it.valid(); it.next()) {
         std::cout << it.getFinish() << " " << it.getLetter() << " , ";
       }
       std::cout << "\n";
@@ -184,8 +184,8 @@ public:
 
   std::vector<Edge> getEdges() {
     std::vector<Edge> result;
-    for (size_t u = 0; u < vertexCount(); ++u) {
-      for (auto it = getBegin(u); it.valid(); it.next()) {
+    for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
+      for (auto it = getBegin(vertex); it.valid(); it.next()) {
         auto current = Edge(it.getStart(), it.getFinish(), it.getLetter());
         result.push_back(current);
       }
@@ -196,9 +196,9 @@ public:
 
   std::vector<Tvertex> getTerminals() {
     std::vector<Tvertex> result;
-    for (size_t v = 0; v < vertexCount(); ++v) {
-      if (isTerminal_[v]) {
-        result.push_back(static_cast<Tvertex>(v));
+    for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
+      if (isTerminal_[vertex]) {
+        result.push_back(static_cast<Tvertex>(vertex));
       }
     }
     return result;
@@ -208,22 +208,22 @@ public:
     auto answerEdges = getEdges();
     auto answerTerminals = getTerminals();
     std::string str = "";
-    for (auto e: answerEdges) {
+    for (auto edge: answerEdges) {
       if (!str.empty()) {
         str += ",";
       }
-      str += std::to_string(e.start);
+      str += std::to_string(edge.start);
       str += ">";
-      str += std::string(1, e.value);
+      str += std::string(1, edge.letter);
       str += ">";
-      str += std::to_string(e.finish);
+      str += std::to_string(edge.finish);
     }
     str += "|";
-    for (auto v: answerTerminals) {
+    for (auto vertex: answerTerminals) {
       if (str.back() != '|') {
         str += ",";
       }
-      str += std::to_string(v);
+      str += std::to_string(vertex);
     }
     return str;
   }
@@ -231,14 +231,14 @@ public:
   finiteAutomaton<Tvertex, Tletter> makeFull(std::vector<Tletter> edgeValues = defaultEdgeValues<Tletter>()) {
     finiteAutomaton<Tvertex, Tletter> answer(adjencyList_, source_, isTerminal_);
     answer.addVertex();
-    for (size_t v = 0; v < answer.vertexCount(); ++v) {
-      std::map<Tletter, bool> used;
-      for (auto it = answer.getBegin(v); it.valid(); it.next()) {
-        used[it.getLetter()] = true;
+    for (size_t vertex = 0; vertex < answer.vertexCount(); ++vertex) {
+      std::map<Tletter, bool> usedEdge;
+      for (auto it = answer.getBegin(vertex); it.valid(); it.next()) {
+        usedEdge[it.getLetter()] = true;
       }
-      for (Tletter c: edgeValues) {
-        if (!used[c]) {
-          answer.insertEdge(static_cast<Tvertex>(v), static_cast<Tvertex>(vertexCount()), c);
+      for (Tletter letter: edgeValues) {
+        if (!usedEdge[letter]) {
+          answer.insertEdge(static_cast<Tvertex>(vertex), static_cast<Tvertex>(vertexCount()), letter);
         }
       }
     }
@@ -247,8 +247,8 @@ public:
 
   finiteAutomaton<Tvertex, Tletter> negatate() {
     std::vector<bool> answerTerminal = isTerminal_;
-    for (size_t v = 0; v < vertexCount(); ++v) {
-      answerTerminal[v] = !isTerminal_[v];
+    for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
+      answerTerminal[vertex] = !isTerminal_[vertex];
     }
     return finiteAutomaton(adjencyList_, source_, answerTerminal);
   }
@@ -260,29 +260,29 @@ public:
 
   std::string getExpression() {
     std::vector<std::vector<std::pair<std::string, int>>> graph(vertexCount() + 1);
-    for (size_t v = 0; v < vertexCount(); ++v) {
-      for (auto it = getBegin(v); it.valid(); it.next()) {
-        graph[v].push_back(std::make_pair(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
+    for (size_t vertex = 0; vertex < vertexCount(); ++vertex) {
+      for (auto it = getBegin(vertex); it.valid(); it.next()) {
+        graph[vertex].push_back(std::make_pair(std::string(1, static_cast<char>(it.getLetter())), static_cast<int>(it.getFinish())));
       }
-      if (isTerminal_[v]) {
-        graph[v].push_back(std::make_pair("", vertexCount()));
+      if (isTerminal_[vertex]) {
+        graph[vertex].push_back(std::make_pair("", vertexCount()));
       }
     }
     std::vector<bool> del(graph.size(), false);
-    for (size_t v = 0; v + 1 < graph.size(); ++v) {
-      if (static_cast<Tvertex>(v) == source_) {
+    for (size_t vertex = 0; vertex + 1 < graph.size(); ++vertex) {
+      if (static_cast<Tvertex>(vertex) == source_) {
         continue;
       }
-      for (size_t u = 0; u < graph.size(); ++u) {
-        if (del[u] || (u == v)) { 
+      for (size_t neighborVertex = 0; neighborVertex < graph.size(); ++neighborVertex) {
+        if (del[neighborVertex] || (neighborVertex == vertex)) { 
           continue;
         }
-        for (auto itu: graph[u]) {
-          if (itu.second == static_cast<int>(v)) {
+        for (auto itu: graph[neighborVertex]) {
+          if (itu.second == static_cast<int>(vertex)) {
             std::string firstPart = itu.first;
             std::string cycle = "";
-            for (auto itcycle: graph[v]) {
-              if (itcycle.second == static_cast<int>(v)) {
+            for (auto itcycle: graph[vertex]) {
+              if (itcycle.second == static_cast<int>(vertex)) {
                 if (itcycle.first.empty()) {
                   continue;
                 }
@@ -292,21 +292,21 @@ public:
                 cycle += "(" + itcycle.first + ")";
               }
             }
-            for (auto ito: graph[v]) {
+            for (auto ito: graph[vertex]) {
               if (del[ito.second]) {
                 continue;
               }
               std::string secondPart = ito.first;
               if (cycle.empty()) {
-                graph[u].push_back(std::make_pair(firstPart + secondPart, ito.second));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + secondPart, ito.second));
               } else {
-                graph[u].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, ito.second));
+                graph[neighborVertex].push_back(std::make_pair(firstPart + "(" + cycle + ")*" + secondPart, ito.second));
               }
             }
           }
         }
       }
-      del[v] = true;
+      del[vertex] = true;
     }
     int source = static_cast<int>(source_);
     int last = static_cast<int>(graph.size()) - 1;
@@ -407,26 +407,26 @@ public:
 template<typename Tvertex, typename Tletter>
 class finiteAutomaton_determinator {
 public: // Must be private, public only for easy-testing
-  using Tcort = std::vector<Tvertex>;
+  using TvertexSubset = std::vector<Tvertex>;
   
   struct subsetEdge {
-    Tcort fin;
-    Tletter value;
+    TvertexSubset finish;
+    Tletter letter;
 
-    subsetEdge(Tcort to, Tletter alphLetter):
-      fin(to),
-      value(alphLetter) {}
+    subsetEdge(TvertexSubset neighborVertex, Tletter letter):
+      finish(neighborVertex),
+      letter(letter) {}
 
     bool operator<(const subsetEdge& anotherEdge) {
-      return std::make_pair(fin, value) < std::make_pair(anotherEdge.fin, anotherEdge.value);
+      return std::make_pair(finish, letter) < std::make_pair(anotherEdge.finish, anotherEdge.letter);
     }
   };
 
-  std::map<Tcort, std::vector<subsetEdge>> graph;
-  std::map<Tcort, bool> tagged;
-  std::vector<Tcort> subsetsArray;
-  std::vector<Tcort> terms;
-  std::queue<Tcort> q;
+  std::map<TvertexSubset, std::vector<subsetEdge>> graph;
+  std::map<TvertexSubset, bool> tagged;
+  std::vector<TvertexSubset> subsetsArray;
+  std::vector<TvertexSubset> terms;
+  std::queue<TvertexSubset> subsetsQueue;
 
   finiteAutomaton<Tvertex, Tletter>& network_;
 
@@ -434,34 +434,34 @@ public: // Must be private, public only for easy-testing
     network_(net) {} 
 
   finiteAutomaton<Tvertex, Tletter> getSubsetGraph() {
-    std::map<Tcort, Tvertex> index;
+    std::map<TvertexSubset, Tvertex> index;
     std::vector<Tvertex> indexTerms;
-    for (size_t i = 0; i < subsetsArray.size(); ++i) {
-      index[subsetsArray[i]] = static_cast<Tvertex>(i);
+    for (size_t position = 0; position < subsetsArray.size(); ++position) {
+      index[subsetsArray[position]] = static_cast<Tvertex>(position);
     }
-    for (size_t i = 0; i < terms.size(); ++i) {
-      indexTerms.push_back(index[terms[i]]);
+    for (size_t position = 0; position < terms.size(); ++position) {
+      indexTerms.push_back(index[terms[position]]);
     }
     finiteAutomaton<Tvertex, Tletter> answer(subsetsArray.size(), index[subsetsArray[0]], indexTerms);
     for (auto it: graph) {
-      for (auto p: it.second) {
-        answer.insertEdge(index[it.first], index[p.fin], p.value);
+      for (auto edgePair: it.second) {
+        answer.insertEdge(index[it.first], index[edgePair.finish], edgePair.letter);
       }
     }
     return answer;
   }
 
-  void searchEdges(Tcort& v, Tcort& u, size_t i, std::vector<std::vector<bool>>& used, 
+  void searchEdges(TvertexSubset& vertex, TvertexSubset& neighborVertex, size_t position, std::vector<std::vector<bool>>& usedPosition, 
                    typename finiteAutomaton<Tvertex, Tletter>::OutgoingEdgesIterator& it) {
-    for (size_t j = i; j < v.size(); ++j) {
-      size_t new_counter = 0;
-      for (auto new_it = network_.getBegin(v[j]); new_it.valid(); new_it.next(), ++new_counter) {
-        if (used[j][new_counter]) {
+    for (size_t newPositon = position; newPositon < vertex.size(); ++newPositon) {
+      size_t newCounter = 0;
+      for (auto newIt = network_.getBegin(vertex[newPositon]); newIt.valid(); newIt.next(), ++newCounter) {
+        if (usedPosition[newPositon][newCounter]) {
           continue;
         }
-        if (it.getLetter() == new_it.getLetter()) {
-          used[j][new_counter] = true;
-          u.push_back(new_it.getFinish());
+        if (it.getLetter() == newIt.getLetter()) {
+          usedPosition[newPositon][newCounter] = true;
+          neighborVertex.push_back(newIt.getFinish());
           break;
         }
       }
@@ -470,37 +470,37 @@ public: // Must be private, public only for easy-testing
 
   finiteAutomaton<Tvertex, Tletter> execute() {
     subsetsArray.push_back({network_.source_});
-    q.push(subsetsArray[0]);
-    while (!q.empty()) {
-      Tcort v = q.front();
-      tagged[v] = true;
-      q.pop();
-      std::vector<std::vector<bool>> used(v.size());
-      for (size_t i = 0; i < v.size(); ++i) {
-        used[i].resize(network_.adjencyList_[v[i]].size(), false);
+    subsetsQueue.push(subsetsArray[0]);
+    while (!subsetsQueue.empty()) {
+      TvertexSubset vertex = subsetsQueue.front();
+      tagged[vertex] = true;
+      subsetsQueue.pop();
+      std::vector<std::vector<bool>> usedPosition(vertex.size());
+      for (size_t position = 0; position < vertex.size(); ++position) {
+        usedPosition[position].resize(network_.adjencyList_[vertex[position]].size(), false);
       }
-      for (size_t i = 0; i < v.size(); ++i) {
-        if (network_.isTerminal_[v[i]]) {
-          terms.push_back(v);
+      for (size_t position = 0; position < vertex.size(); ++position) {
+        if (network_.isTerminal_[vertex[position]]) {
+          terms.push_back(vertex);
           break;
         }
       }
-      for (size_t i = 0; i < v.size(); ++i) {
+      for (size_t position = 0; position < vertex.size(); ++position) {
         size_t counter = 0;
-        for (auto it = network_.getBegin(v[i]); it.valid(); it.next(), ++counter) {
-          if (used[i][counter]) {
+        for (auto it = network_.getBegin(vertex[position]); it.valid(); it.next(), ++counter) {
+          if (usedPosition[position][counter]) {
             continue;
           }
-          used[i][counter] = true;
-          Tcort u = {it.getFinish()};
-          searchEdges(v, u, i, used, it);
-          sort(u.begin(), u.end());
-          u.erase(std::unique(u.begin(), u.end()), u.end());
-          graph[v].push_back(subsetEdge(u, it.getLetter()));
-          if (!tagged[u]) {
-            tagged[u] = true;
-            subsetsArray.push_back(u);
-            q.push(u);
+          usedPosition[position][counter] = true;
+          TvertexSubset neighborVertex = {it.getFinish()};
+          searchEdges(vertex, neighborVertex, position, usedPosition, it);
+          sort(neighborVertex.begin(), neighborVertex.end());
+          neighborVertex.erase(std::unique(neighborVertex.begin(), neighborVertex.end()), neighborVertex.end());
+          graph[vertex].push_back(subsetEdge(neighborVertex, it.getLetter()));
+          if (!tagged[neighborVertex]) {
+            tagged[neighborVertex] = true;
+            subsetsArray.push_back(neighborVertex);
+            subsetsQueue.push(neighborVertex); 
           }
         }
       }
@@ -521,20 +521,20 @@ public:// Must be private, public only for easy-testing
 
   finiteAutomaton<Tvertex, Tletter> getClassGraph(std::vector<int> classNumber, int currentClassNumber) {
     std::vector<bool> answerTerminal(currentClassNumber, false);
-    for (size_t v = 0; v < classNumber.size(); ++v) {
-      if (network_.isTerminal_[v]) {
-        answerTerminal[classNumber[v]] = true;
+    for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
+      if (network_.isTerminal_[vertex]) {
+        answerTerminal[classNumber[vertex]] = true;
       }
     }
     finiteAutomaton<Tvertex, Tletter> answer(currentClassNumber, classNumber[network_.source_], answerTerminal);
-    std::map<std::pair<std::pair<int, int>, Tletter>, bool> used;
-    for (size_t v = 0; v < classNumber.size(); ++v) {
-      for (auto it = network_.getBegin(v); it.valid(); it.next()) {
-        auto currentEdge = std::make_pair(std::make_pair(classNumber[v], classNumber[it.getFinish()]), it.getLetter());
-        if (used[currentEdge]) {
+    std::map<std::pair<std::pair<int, int>, Tletter>, bool> usedEdge;
+    for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
+      for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
+        auto currentEdge = std::make_pair(std::make_pair(classNumber[vertex], classNumber[it.getFinish()]), it.getLetter());
+        if (usedEdge[currentEdge]) {
           continue;
         }
-        used[currentEdge] = true;
+        usedEdge[currentEdge] = true;
         Tvertex stU = static_cast<Tvertex>(currentEdge.first.first);
         Tvertex stV = static_cast<Tvertex>(currentEdge.first.second);
         answer.insertEdge(stU, stV, currentEdge.second);
@@ -545,9 +545,9 @@ public:// Must be private, public only for easy-testing
 
   finiteAutomaton<Tvertex, Tletter> execute() {
     std::vector<int> classNumber(network_.vertexCount(), 0);
-    for (size_t v = 0; v < network_.vertexCount(); ++v) {
-      if (network_.isTerminal_[v]) {
-        classNumber[v] = 1;
+    for (size_t vertex = 0; vertex < network_.vertexCount(); ++vertex) {
+      if (network_.isTerminal_[vertex]) {
+        classNumber[vertex] = 1;
       }
     }
     auto oldClassNumber = classNumber;
@@ -555,27 +555,27 @@ public:// Must be private, public only for easy-testing
     int numberOfIterations = network_.vertexCount();
     while (numberOfIterations--) {
       std::vector<std::vector<std::pair<Tletter, int>>> adlist(classNumber.size());
-      for (size_t v = 0; v < classNumber.size(); ++v) {
-        for (auto it = network_.getBegin(v); it.valid(); it.next()) {
-          adlist[v].push_back(std::make_pair(it.getLetter(), classNumber[it.getFinish()]));
+      for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
+        for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
+          adlist[vertex].push_back(std::make_pair(it.getLetter(), classNumber[it.getFinish()]));
         }
-        std::sort(adlist[v].begin(), adlist[v].end());
-        adlist[v].erase(std::unique(adlist[v].begin(), adlist[v].end()), adlist[v].end());
+        std::sort(adlist[vertex].begin(), adlist[vertex].end());
+        adlist[vertex].erase(std::unique(adlist[vertex].begin(), adlist[vertex].end()), adlist[vertex].end());
       }
       bool checkIteration = false;
-      for (size_t v = 0; v < classNumber.size(); ++v) {
+      for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
         bool isFinded = false;
         bool isConflict = false;
-        for (size_t u = 0; u < v; ++u) {
-          if ((adlist[u] == adlist[v]) && (oldClassNumber[u] == oldClassNumber[v])) {
+        for (size_t neighborVertex = 0; neighborVertex < vertex; ++neighborVertex) {
+          if ((adlist[neighborVertex] == adlist[vertex]) && (oldClassNumber[neighborVertex] == oldClassNumber[vertex])) {
             isFinded = true;
-            classNumber[v] = classNumber[u];
-          } else if (classNumber[u] == classNumber[v]) {
+            classNumber[vertex] = classNumber[neighborVertex];
+          } else if (classNumber[neighborVertex] == classNumber[vertex]) {
             isConflict = true;
           }
         }
         if (!isFinded && isConflict) {
-          classNumber[v] = currentClassNumber++;
+          classNumber[vertex] = currentClassNumber++;
           checkIteration = true;
         }
       }
