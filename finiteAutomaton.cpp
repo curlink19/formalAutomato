@@ -400,20 +400,40 @@ public:
     }
     return result;
   }
+
+  friend finiteAutomaton_determinator<Tvertex, Tletter>;
 };
 
 template<typename Tvertex, typename Tletter>
 class finiteAutomaton_determinator {
 public: // Must be private, public only for easy-testing
+  using Tcort = std::vector<Tvertex>;
+  
+  struct subsetEdge {
+    Tcort fin;
+    Tletter value;
+
+    subsetEdge(Tcort to, Tletter alphLetter):
+      fin(to),
+      value(alphLetter) {}
+
+    bool operator<(const subsetEdge& anotherEdge) {
+      return std::make_pair(fin, value) < std::make_pair(anotherEdge.fin, anotherEdge.value);
+    }
+  };
+
+  std::map<Tcort, std::vector<subsetEdge>> graph;
+  std::map<Tcort, bool> tagged;
+  std::vector<Tcort> subsetsArray;
+  std::vector<Tcort> terms;
+  std::queue<Tcort> q;
+
   finiteAutomaton<Tvertex, Tletter>& network_;
 
   finiteAutomaton_determinator(finiteAutomaton<Tvertex, Tletter>& net):
     network_(net) {} 
 
-  using Tcort = std::vector<Tvertex>;
-
-  finiteAutomaton<Tvertex, Tletter> getSubsetGraph(std::vector<Tcort> subsetsArray, std::vector<Tcort> terms,
-                                    std::map<Tcort, std::vector<std::pair<Tcort, Tletter>>> graph) {
+  finiteAutomaton<Tvertex, Tletter> getSubsetGraph() {
     std::map<Tcort, Tvertex> index;
     std::vector<Tvertex> indexTerms;
     for (size_t i = 0; i < subsetsArray.size(); ++i) {
@@ -425,19 +445,31 @@ public: // Must be private, public only for easy-testing
     finiteAutomaton<Tvertex, Tletter> answer(subsetsArray.size(), index[subsetsArray[0]], indexTerms);
     for (auto it: graph) {
       for (auto p: it.second) {
-        answer.insertEdge(index[it.first], index[p.first], p.second);
+        answer.insertEdge(index[it.first], index[p.fin], p.value);
       }
     }
     return answer;
   }
 
+  void searchEdges(Tcort& v, Tcort& u, size_t i, std::vector<std::vector<bool>>& used, 
+                   typename finiteAutomaton<Tvertex, Tletter>::OutgoingEdgesIterator& it) {
+    for (size_t j = i; j < v.size(); ++j) {
+      size_t new_counter = 0;
+      for (auto new_it = network_.getBegin(v[j]); new_it.valid(); new_it.next(), ++new_counter) {
+        if (used[j][new_counter]) {
+          continue;
+        }
+        if (it.getLetter() == new_it.getLetter()) {
+          used[j][new_counter] = true;
+          u.push_back(new_it.getFinish());
+          break;
+        }
+      }
+    }
+  }
+
   finiteAutomaton<Tvertex, Tletter> execute() {
-    std::map<Tcort, std::vector<std::pair<Tcort, Tletter>>> graph;
-    std::map<Tcort, bool> tagged;
-    std::vector<Tcort> subsetsArray;
-    std::vector<Tcort> terms;
     subsetsArray.push_back({network_.source_});
-    std::queue<Tcort> q;
     q.push(subsetsArray[0]);
     while (!q.empty()) {
       Tcort v = q.front();
@@ -461,22 +493,10 @@ public: // Must be private, public only for easy-testing
           }
           used[i][counter] = true;
           Tcort u = {it.getFinish()};
-          for (size_t j = i; j < v.size(); ++j) {
-            size_t new_counter = 0;
-            for (auto new_it = network_.getBegin(v[j]); new_it.valid(); new_it.next(), ++new_counter) {
-              if (used[j][new_counter]) {
-                continue;
-              }
-              if (it.getLetter() == new_it.getLetter()) {
-                used[j][new_counter] = true;
-                u.push_back(new_it.getFinish());
-                break;
-              }
-            }
-          }
+          searchEdges(v, u, i, used, it);
           sort(u.begin(), u.end());
           u.erase(std::unique(u.begin(), u.end()), u.end());
-          graph[v].push_back(std::make_pair(u, it.getLetter()));
+          graph[v].push_back(subsetEdge(u, it.getLetter()));
           if (!tagged[u]) {
             tagged[u] = true;
             subsetsArray.push_back(u);
@@ -485,7 +505,7 @@ public: // Must be private, public only for easy-testing
         }
       }
     }
-    return getSubsetGraph(subsetsArray, terms, graph);
+    return getSubsetGraph();
   }
 
   friend finiteAutomaton<Tvertex, Tletter>;

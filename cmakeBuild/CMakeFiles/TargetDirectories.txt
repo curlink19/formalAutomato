@@ -1,0 +1,3 @@
+/home/curlink/work/lab/git/formalAutomato/cmakeBuild/CMakeFiles/rebuild_cache.dir
+/home/curlink/work/lab/git/formalAutomato/cmakeBuild/CMakeFiles/edit_cache.dir
+/home/curlink/work/lab/git/formalAutomato/cmakeBuild/CMakeFiles/runTests.dir

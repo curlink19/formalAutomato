@@ -128,10 +128,13 @@ TEST_F(TestFiniteAutomaton, determinator_getSubsetGraph) {
   finiteAutomaton_determinator<int, char> fooDeterminator(*foo);
   std::vector<Tcort> subsetsArray = {{1}, {1, 2}, {1, 2, 3}};
   std::vector<Tcort> terms = {{1, 2}};
-  std::map<Tcort, std::vector<std::pair<Tcort, char>>> graph;
-  graph[{1}] = {{{1, 2}, 'x'}};
-  graph[{1, 2}] = {{{1, 2, 3}, 'y'}};
-  ASSERT_EQ(fooDeterminator.getSubsetGraph(subsetsArray, terms, graph).getHash(), "0>x>1,1>y>2|1");
+  std::map<Tcort, std::vector<finiteAutomaton_determinator<int, char>::subsetEdge>> graph;
+  graph[{1}] = {finiteAutomaton_determinator<int, char>::subsetEdge({1, 2}, 'x')};
+  graph[{1, 2}] = {finiteAutomaton_determinator<int, char>::subsetEdge({1, 2, 3}, 'y')};
+  fooDeterminator.subsetsArray = subsetsArray;
+  fooDeterminator.graph = graph;
+  fooDeterminator.terms = terms;
+  ASSERT_EQ((fooDeterminator.getSubsetGraph()).getHash(), "0>x>1,1>y>2|1");
 }
 
 TEST_F(TestFiniteAutomaton, minimizer_getClassGraph) {
