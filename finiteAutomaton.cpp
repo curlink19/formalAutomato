@@ -286,9 +286,9 @@ public:
         if (del[neighborVertex] || (neighborVertex == vertex)) { 
           continue;
         }
-        for (auto itu: graph[neighborVertex]) {
-          if (itu.vertex == static_cast<int>(vertex)) {
-            std::string firstPart = itu.str;
+        for (auto it: graph[neighborVertex]) {
+          if (it.vertex == static_cast<int>(vertex)) {
+            std::string firstPart = it.str;
             std::string cycle = "";
             for (auto itcycle: graph[vertex]) {
               if (itcycle.vertex == static_cast<int>(vertex)) {
