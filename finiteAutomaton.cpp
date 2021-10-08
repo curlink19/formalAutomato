@@ -519,6 +519,23 @@ public:// Must be private, public only for easy-testing
   finiteAutomaton_minimizer(finiteAutomaton<Tvertex, Tletter>& net):
     network_(net) {} 
 
+  class integerDoubleEdge {
+  public:
+    int start;
+    int finish;
+    Tletter letter;
+
+    integerDoubleEdge(int startVertex, int finishVertex, Tletter edgeLetter):
+      start(startVertex),
+      finish(finishVertex),
+      letter(edgeLetter) {}
+
+    bool operator<(const integerDoubleEdge& anotherEdge) const {
+      return std::make_pair(std::make_pair(start, finish), letter) <
+             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.letter);
+    }
+  };
+
   finiteAutomaton<Tvertex, Tletter> getClassGraph(std::vector<int> classNumber, int currentClassNumber) {
     std::vector<bool> answerTerminal(currentClassNumber, false);
     for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
@@ -527,21 +544,39 @@ public:// Must be private, public only for easy-testing
       }
     }
     finiteAutomaton<Tvertex, Tletter> answer(currentClassNumber, classNumber[network_.source_], answerTerminal);
-    std::map<std::pair<std::pair<int, int>, Tletter>, bool> usedEdge;
+    std::map<integerDoubleEdge, bool> usedEdge;
     for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
       for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
-        auto currentEdge = std::make_pair(std::make_pair(classNumber[vertex], classNumber[it.getFinish()]), it.getLetter());
+        auto currentEdge = integerDoubleEdge(classNumber[vertex], classNumber[it.getFinish()], it.getLetter());
         if (usedEdge[currentEdge]) {
           continue;
         }
         usedEdge[currentEdge] = true;
-        Tvertex stU = static_cast<Tvertex>(currentEdge.first.first);
-        Tvertex stV = static_cast<Tvertex>(currentEdge.first.second);
-        answer.insertEdge(stU, stV, currentEdge.second);
+        Tvertex startVertex = static_cast<Tvertex>(currentEdge.start);
+        Tvertex finishVertex = static_cast<Tvertex>(currentEdge.finish);
+        answer.insertEdge(startVertex, finishVertex, currentEdge.letter);
       }
     }
     return answer;
   }
+
+  class integerMonoEdge {
+  public:
+    Tletter letter;
+    int vertex;
+
+    integerMonoEdge(Tletter edgeLetter, int edgeVertex):
+      letter(edgeLetter),
+      vertex(edgeVertex) {}
+
+    bool operator<(const integerMonoEdge& anotherEdge) const {
+      return std::make_pair(letter, vertex) < std::make_pair(anotherEdge.letter, anotherEdge.vertex);
+    }
+
+    bool operator==(const integerMonoEdge& anotherEdge) const {
+      return std::make_pair(letter, vertex) == std::make_pair(anotherEdge.letter, anotherEdge.vertex);
+    }
+  };
 
   finiteAutomaton<Tvertex, Tletter> execute() {
     std::vector<int> classNumber(network_.vertexCount(), 0);
@@ -554,10 +589,10 @@ public:// Must be private, public only for easy-testing
     int currentClassNumber = 2;
     int numberOfIterations = network_.vertexCount();
     while (numberOfIterations--) {
-      std::vector<std::vector<std::pair<Tletter, int>>> adlist(classNumber.size());
+      std::vector<std::vector<integerMonoEdge>> adlist(classNumber.size());
       for (size_t vertex = 0; vertex < classNumber.size(); ++vertex) {
         for (auto it = network_.getBegin(vertex); it.valid(); it.next()) {
-          adlist[vertex].push_back(std::make_pair(it.getLetter(), classNumber[it.getFinish()]));
+          adlist[vertex].push_back(integerMonoEdge(it.getLetter(), classNumber[it.getFinish()]));
         }
         std::sort(adlist[vertex].begin(), adlist[vertex].end());
         adlist[vertex].erase(std::unique(adlist[vertex].begin(), adlist[vertex].end()), adlist[vertex].end());
