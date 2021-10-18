@@ -310,9 +310,9 @@ public:
               }
               std::string secondPart = lastPartEdgesIterator.letter;
               if (cyclePart.empty()) {
-                graph[adjacentVertex].push_back(std::make_pair(firstPart + secondPart, lastPartEdgesIterator.vertex));
+                graph[adjacentVertex].push_back(edgeWithStringAsLetter(firstPart + secondPart, lastPartEdgesIterator.vertex));
               } else {
-                graph[adjacentVertex].push_back(std::make_pair(firstPart + "(" + cyclePart + ")*" + secondPart, lastPartEdgesIterator.vertex));
+                graph[adjacentVertex].push_back(edgeWithStringAsLetter(firstPart + "(" + cyclePart + ")*" + secondPart, lastPartEdgesIterator.vertex));
               }
             }
           }
