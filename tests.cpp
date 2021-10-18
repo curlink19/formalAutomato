@@ -128,12 +128,12 @@ TEST_F(TestFiniteAutomaton, determinator_getSubsetGraph) {
   finiteAutomaton_determinator<int, char> fooDeterminator(*foo);
   std::vector<Tcort> subsetsArray = {{1}, {1, 2}, {1, 2, 3}};
   std::vector<Tcort> terms = {{1, 2}};
-  std::map<Tcort, std::vector<finiteAutomaton_determinator<int, char>::subsetEdge>> graph;
-  graph[{1}] = {finiteAutomaton_determinator<int, char>::subsetEdge({1, 2}, 'x')};
-  graph[{1, 2}] = {finiteAutomaton_determinator<int, char>::subsetEdge({1, 2, 3}, 'y')};
-  fooDeterminator.subsetsArray = subsetsArray;
+  std::map<Tcort, std::vector<finiteAutomaton_determinator<int, char>::subsetsGraphEdge>> graph;
+  graph[{1}] = {finiteAutomaton_determinator<int, char>::subsetsGraphEdge({1, 2}, 'x')};
+  graph[{1, 2}] = {finiteAutomaton_determinator<int, char>::subsetsGraphEdge({1, 2, 3}, 'y')};
+  fooDeterminator.arrayOfSubsets = subsetsArray;
   fooDeterminator.graph = graph;
-  fooDeterminator.terms = terms;
+  fooDeterminator.terminals = terms;
   ASSERT_EQ((fooDeterminator.getSubsetGraph()).getHash(), "0>x>1,1>y>2|1");
 }
 
@@ -144,7 +144,7 @@ TEST_F(TestFiniteAutomaton, minimizer_getClassGraph) {
   foo->insertEdge(1, 3, 'x');
   foo->insertEdge(2, 3, 'x');
   finiteAutomaton_minimizer<int, char> fooMinimizer(*foo);
-  ASSERT_EQ(fooMinimizer.getClassGraph(std::vector<int>({0, 1, 1, 2}), 3).getHash(), "0>a>1,0>b>1,1>x>2|2");
+  ASSERT_EQ(fooMinimizer.getClassesGraph(std::vector<int>({0, 1, 1, 2}), 3).getHash(), "0>a>1,0>b>1,1>x>2|2");
 }
 
 int main(int args, char *argv[]) {
