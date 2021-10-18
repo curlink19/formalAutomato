@@ -16,6 +16,16 @@ std::vector<Tletter> defaultAlphabetLetters() {
   return alphabetArray;
 }
 
+template<typename Tletter>
+Tletter defaultZeroLetter() {
+  return static_cast<Tletter>(0);
+}
+
+template<>
+char defaultZeroLetter() {
+  return '.';
+}
+
 template<typename Tvertex, typename Tletter>
 class finiteAutomaton_determinator;
 
@@ -71,7 +81,11 @@ public:
   
   size_t vertexCount() const {
     return adjencyList_.size();
-  } 
+  }
+
+  Tvertex getSource() const {
+    return source_;
+  }
 
   class OutgoingEdgesIterator {
   private:

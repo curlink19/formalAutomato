@@ -1,4 +1,4 @@
-#include "finiteAutomaton.cpp"
+#include "finiteAutomatonArithmetic.cpp" 
 #include <gtest/gtest.h>
 
 class TestFiniteAutomaton: public ::testing::Test {
@@ -145,6 +145,61 @@ TEST_F(TestFiniteAutomaton, minimizer_getClassGraph) {
   foo->insertEdge(2, 3, 'x');
   finiteAutomaton_minimizer<int, char> fooMinimizer(*foo);
   ASSERT_EQ(fooMinimizer.getClassesGraph(std::vector<int>({0, 1, 1, 2}), 3).getHash(), "0>a>1,0>b>1,1>x>2|2");
+}
+
+class TestFiniteAutomatonArithmetic: public ::testing::Test {
+protected:
+  finiteAutomaton<int, char>* fooFirstTerm;
+  finiteAutomaton<int, char>* fooSecondTerm;
+
+  void SetUp() {
+    fooFirstTerm = nullptr;
+    fooSecondTerm = nullptr;
+  }
+
+  void TearDown() {
+    if (fooFirstTerm != nullptr) { 
+      delete fooFirstTerm;
+    }
+    if (fooSecondTerm != nullptr) {
+      delete fooSecondTerm;
+    } 
+  }
+};
+
+TEST_F(TestFiniteAutomatonArithmetic, simpleSum) {
+  fooFirstTerm = new finiteAutomaton<int, char>(3, 0, std::vector<int>({2}));
+  fooSecondTerm = new finiteAutomaton<int, char>(2, 1, std::vector<int>({0, 1}));
+  fooFirstTerm->insertEdge(0, 1, 'x');
+  fooFirstTerm->insertEdge(1, 2, 'x');
+  fooFirstTerm->insertEdge(0, 2, 'y');
+  fooFirstTerm->insertEdge(2, 0, 'z');
+  fooSecondTerm->insertEdge(0, 1, 'a');
+  fooSecondTerm->insertEdge(1, 0, 'a');
+  finiteAutomaton<int, char> result = sum<int, char>(*fooFirstTerm, *fooSecondTerm);
+  ASSERT_EQ(result.getHash(), "0>.>2,0>.>6,2>x>3,2>y>4,3>x>4,4>.>1,4>z>2,5>.>1,5>a>6,6>.>1,6>a>5|1");
+}
+
+TEST_F(TestFiniteAutomatonArithmetic, simplecConcatenation) {
+  fooFirstTerm = new finiteAutomaton<int, char>(2, 1, std::vector<int>({0, 1}));
+  fooSecondTerm = new finiteAutomaton<int, char>(3, 2, std::vector<int>({0, 1, 2}));
+  fooFirstTerm->insertEdge(0, 1, 'a');
+  fooFirstTerm->insertEdge(1, 0, 'b');
+  fooSecondTerm->insertEdge(2, 1, 'x');
+  fooSecondTerm->insertEdge(1, 0, 'y');
+  fooSecondTerm->insertEdge(0, 2, 'z');
+  finiteAutomaton<int, char> result = concatenation<int, char>(*fooFirstTerm, *fooSecondTerm);
+  ASSERT_EQ(result.getHash(), "0>.>3,2>a>3,2>.>6,3>b>2,3>.>6,4>.>1,4>z>6,5>.>1,5>y>4,6>.>1,6>x>5|1");
+}
+
+TEST_F(TestFiniteAutomatonArithmetic, simpleClosure) {
+  fooFirstTerm = new finiteAutomaton<int, char>(3, 1, std::vector<int>({0, 2}));
+  fooFirstTerm->insertEdge(1, 2, 'a');
+  fooFirstTerm->insertEdge(1, 0, 'a');
+  fooFirstTerm->insertEdge(2, 0, 'b');
+  fooFirstTerm->insertEdge(0, 1, 'c');
+  finiteAutomaton<int, char> result = closure<int, char>(*fooFirstTerm);
+  ASSERT_EQ(result.getHash(), "0>.>3,1>.>0,2>.>1,2>c>3,3>a>2,3>a>4,4>.>1,4>b>2|1");
 }
 
 int main(int args, char *argv[]) {
