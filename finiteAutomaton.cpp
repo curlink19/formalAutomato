@@ -491,7 +491,6 @@ public: // Must be private, public only for easy-testing
         if (adjacentEdgesIterator.getLetter() == innerAdjacentEdgesIterator.getLetter()) {
           isIndexUsed[innerPostion][innerCounter] = true;
           adjacentVertex.push_back(innerAdjacentEdgesIterator.getFinish());
-          break;
         }
       }
     }

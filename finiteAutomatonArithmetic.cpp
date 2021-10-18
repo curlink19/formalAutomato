@@ -68,7 +68,7 @@ finiteAutomaton<Tvertex, Tletter> closure(finiteAutomaton<Tvertex, Tletter> base
                                       Tletter zeroLetter = defaultZeroLetter<Tletter>()) {  
   Tvertex answerSource = static_cast<Tvertex>(0);
   Tvertex answerTerminal = static_cast<Tvertex>(1);
-  finiteAutomaton<Tvertex, Tletter> answer(2 + base.vertexCount(), answerSource, std::vector<Tvertex>({answerTerminal}));
+  finiteAutomaton<Tvertex, Tletter> answer(2 + base.vertexCount(), answerSource, std::vector<Tvertex>({answerSource, answerTerminal}));
   using TEdge = typename finiteAutomaton<Tvertex, Tletter>::Edge;
   Tvertex shift = static_cast<Tvertex>(2);
   std::vector<TEdge> baseEdges = base.getEdges();

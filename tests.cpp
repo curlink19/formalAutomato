@@ -1,4 +1,4 @@
-#include "finiteAutomatonArithmetic.cpp" 
+#include "maxSingleSubstringFinder.cpp" 
 #include <gtest/gtest.h>
 
 class TestFiniteAutomaton: public ::testing::Test {
@@ -199,7 +199,37 @@ TEST_F(TestFiniteAutomatonArithmetic, simpleClosure) {
   fooFirstTerm->insertEdge(2, 0, 'b');
   fooFirstTerm->insertEdge(0, 1, 'c');
   finiteAutomaton<int, char> result = closure<int, char>(*fooFirstTerm);
-  ASSERT_EQ(result.getHash(), "0>.>3,1>.>0,2>.>1,2>c>3,3>a>2,3>a>4,4>.>1,4>b>2|1");
+  ASSERT_EQ(result.getHash(), "0>.>3,1>.>0,2>.>1,2>c>3,3>a>2,3>a>4,4>.>1,4>b>2|0,1");
+}
+
+class TestMaxSingleSubstringFinder: public ::testing::Test {
+protected:
+  maxSingleSubstringFinder* algorithmInstance;
+
+  void SetUp() {
+    algorithmInstance = nullptr;
+  }
+
+  void TearDown() {
+    if (algorithmInstance != nullptr) { 
+      delete algorithmInstance;
+    }
+  }
+};
+
+TEST_F(TestMaxSingleSubstringFinder, simpleAutomatonBuilding) {
+  algorithmInstance = new maxSingleSubstringFinder("1ab+*.c.");
+  ASSERT_EQ(algorithmInstance->base.getHash(), "0>a>0,0>b>0,0>c>1,1>a>2,1>b>2,1>c>2,2>a>2,2>b>2,2>c>2|1");
+}
+
+TEST_F(TestMaxSingleSubstringFinder, simpleMainTest1) {
+  algorithmInstance = new maxSingleSubstringFinder("ab+c.aba.*.bac.+.+*");
+  ASSERT_EQ(algorithmInstance->execute('a'), 2);
+}
+
+TEST_F(TestMaxSingleSubstringFinder, simpleMainTest2) {
+  algorithmInstance = new maxSingleSubstringFinder("acb..bab.c.*.ab.ba.+.+*a.");
+  ASSERT_EQ(algorithmInstance->execute('a'), 2);
 }
 
 int main(int args, char *argv[]) {
