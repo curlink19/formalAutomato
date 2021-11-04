@@ -47,8 +47,7 @@ public:
       letter(edgeLetter) {} 
     
     bool operator<(const Edge& anotherEdge) const {
-      return std::make_pair(std::make_pair(start, finish), letter) <
-             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.letter);
+      return std::make_tuple(start, finish, letter) < std::make_tuple(anotherEdge.start, anotherEdge.finish, anotherEdge.letter);
     }
   };
 
@@ -560,8 +559,7 @@ public:// Must be private, public only for easy-testing
       letter(edgeLetter) {}
 
     bool operator<(const bidirectionalEdge& anotherEdge) const {
-      return std::make_pair(std::make_pair(start, finish), letter) <
-             std::make_pair(std::make_pair(anotherEdge.start, anotherEdge.finish), anotherEdge.letter);
+      return std::make_tuple(start, finish, letter) < std::make_tuple(anotherEdge.start, anotherEdge.finish, anotherEdge.letter);
     }
   };
 
